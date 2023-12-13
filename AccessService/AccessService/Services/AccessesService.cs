@@ -80,7 +80,8 @@ namespace AccessService.Services
         public async Task<UserTableModelDTO> CreateUserAsync(UserTableModelDTO userModel)
         {
             var role = await _context.UserRoleModelDTO.FirstOrDefaultAsync(r => r.Id == userModel.RoleId);
-            if (role != null)
+            var existemail = await _context.UserTableModelDTO.FirstOrDefaultAsync(r => r.Email == userModel.Email);
+            if (role != null && existemail == null)
             {
                 var newUser = new UserTableModelDTO
                 {
