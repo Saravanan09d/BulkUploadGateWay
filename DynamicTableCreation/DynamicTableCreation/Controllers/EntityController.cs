@@ -213,7 +213,6 @@ namespace ExcelGeneration.Controllers
                 {
                     return NotFound($"EntityId not found for EntityName: {entityName}");
                 }
-
                 return Ok(new APIResponse
                 {
                     StatusCode = HttpStatusCode.OK,
@@ -306,6 +305,7 @@ namespace ExcelGeneration.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
         [HttpGet("GetTableDetails")]
         public IActionResult GetTableDetails([FromQuery] ConnectionStringDTO connectionDto, [FromServices] EntityService dbContext)
         {
@@ -317,15 +317,26 @@ namespace ExcelGeneration.Controllers
                 var tableDetails = connectionStringService.GetTableDetails(connectionString);
                 // Add table details to the database
                 connectionStringService.AddTableDetailsToDatabase(tableDetails);
-                return Ok(tableDetails);
+                var responseModel = new APIResponse
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    Result = tableDetails
+                };
+                return Ok(responseModel);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                return StatusCode(500, "Internal Server Error");
+                var responseModel = new APIResponse
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessage = new List<string> { ex.Message },
+                    Result = null
+                };
+                return StatusCode((int)responseModel.StatusCode, responseModel);
             }
         }
-
     }
 }
 
