@@ -8,6 +8,7 @@ namespace DynamicTableCreation.Services
     public class EntityService
     {
         private readonly ApplicationDbContext _dbContext;
+
         public EntityService(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;

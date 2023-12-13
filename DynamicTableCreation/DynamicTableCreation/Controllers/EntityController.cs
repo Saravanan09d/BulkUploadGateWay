@@ -22,6 +22,7 @@ namespace ExcelGeneration.Controllers
         protected APIResponse _response;
         //private readonly ViewService _viewService;
         private readonly IViewService _viewService;
+
         public EntityController(EntityService dynamicDbService, IEntitylistService entitylistService, IViewService viewService, ConnectionStringService ConnectionStringService, ApplicationDbContext dbContext)
         {
             _dynamicDbService = dynamicDbService;
@@ -212,7 +213,6 @@ namespace ExcelGeneration.Controllers
                 {
                     return NotFound($"EntityId not found for EntityName: {entityName}");
                 }
-
                 return Ok(new APIResponse
                 {
                     StatusCode = HttpStatusCode.OK,
@@ -306,43 +306,37 @@ namespace ExcelGeneration.Controllers
             }
         }
 
-        //[HttpGet("GetTableDetails")]
-        //public IActionResult GetTableDetails([FromServices] EntityService dbContext)
-        //{
-        //    try
-        //    {
-        //        var connectionStringService = new ConnectionStringService(_dbContext);
-        //        string connectionString = "Host=localhost;Database=DynamicTableCreationLatestDEC01;Username=postgres;Password=openpgpwd";
-        //        var tableDetails = connectionStringService.GetTableDetails(connectionString);
-        //        // Add table details to the database
-        //        connectionStringService.AddTableDetailsToDatabase(tableDetails);
-        //        return Ok(tableDetails);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"An error occurred: {ex.Message}");
-        //        return StatusCode(500, "Internal Server Error");
-        //    }
-        //}
         [HttpGet("GetTableDetails")]
-        public IActionResult GetTableDetails([FromQuery] string host, [FromQuery] string database, [FromQuery] string username, [FromQuery] string password, [FromServices] EntityService dbContext)
+        public IActionResult GetTableDetails([FromQuery] ConnectionStringDTO connectionDto, [FromServices] EntityService dbContext)
         {
             try
             {
                 var connectionStringService = new ConnectionStringService(_dbContext);
-                string connectionString = $"Host={host};Database={database};Username={username};Password={password}";
+                string connectionString = $"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}";
+                HttpContext.Session.SetString("ConnectionString", connectionString);
                 var tableDetails = connectionStringService.GetTableDetails(connectionString);
                 // Add table details to the database
                 connectionStringService.AddTableDetailsToDatabase(tableDetails);
-                return Ok(tableDetails);
+                var responseModel = new APIResponse
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSuccess = true,
+                    Result = tableDetails
+                };
+                return Ok(responseModel);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-                return StatusCode(500, "Internal Server Error");
+                var responseModel = new APIResponse
+                {
+                    StatusCode = HttpStatusCode.InternalServerError,
+                    IsSuccess = false,
+                    ErrorMessage = new List<string> { ex.Message },
+                    Result = null
+                };
+                return StatusCode((int)responseModel.StatusCode, responseModel);
             }
         }
-
     }
 }
 

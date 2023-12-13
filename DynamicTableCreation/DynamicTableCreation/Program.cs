@@ -22,6 +22,14 @@ builder.Services.AddCors(options =>
                    .AllowAnyMethod();
         });
 });
+
+builder.Services.AddDistributedMemoryCache(); // Use an in-memory cache provider for session
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Set the session timeout as needed
+    options.Cookie.HttpOnly = true;
+});
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<EntityService>();
 builder.Services.AddScoped<EntitylistService>();
@@ -46,10 +54,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
-
+app.UseSession();
 app.UseAuthorization();
-
 app.MapControllers();
-
-
 app.Run();
