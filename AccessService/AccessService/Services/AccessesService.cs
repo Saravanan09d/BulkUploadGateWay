@@ -58,9 +58,9 @@ namespace AccessService.Services
                 Subject = new ClaimsIdentity(new[]
                 {
             new Claim(ClaimTypes.Name, user.Id.ToString()),
-            new Claim("userId", user.Id.ToString()), // Add userId claim
+            new Claim("userName", user.Name.ToString()), // Add userId claim
             new Claim(ClaimTypes.Email, user.Email), // Add email claim
-            new Claim("RoleId", user.RoleId.ToString()) // Add role claim
+            new Claim("roleName", Getrole(user.RoleId).ToString()) // Add role claim
              }),
                 Expires = DateTime.UtcNow.AddHours(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -101,5 +101,25 @@ namespace AccessService.Services
             var passwordHasher = new PasswordHasher<UserTableModelDTO>();
             return passwordHasher.HashPassword(null, password);
         }
+        
+        public string Getrole(int Id)
+        {
+            if (Id == 0)
+            {
+                return null;
+            }
+
+            else
+            {
+                var role =  _context.UserRoleModel.FirstOrDefault(x => x.Id == Id);
+
+                if (role != null)
+                {
+                    return role.RoleName;
+                }
+                return null;
+            }
+        }
+        
     }
 }

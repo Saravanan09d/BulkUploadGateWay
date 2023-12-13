@@ -31,7 +31,7 @@ namespace AccessService.Controllers
                     {
                         StatusCode = HttpStatusCode.OK,
                         IsSuccess = true,
-                        Result = userDetailsDTO
+                        Result = userDetailsDTO.Token
                     };
                     return Ok(responseModel);
                 }
