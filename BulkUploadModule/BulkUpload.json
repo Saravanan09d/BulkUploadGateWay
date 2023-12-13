@@ -125,7 +125,7 @@
     },
     {
       //GetClientDatabaseDataPasteOurMetaTable
-      "DownstreamPathTemplate": "/GetTableDetails",
+      "DownstreamPathTemplate": "/GetTableDetails?Host={{Host}}&Database={{Database}}&Username={{UserName}}&Password={{Password}}",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
@@ -133,7 +133,7 @@
           "Port": 7254
         }
       ],
-      "UpstreamPathTemplate": "/GetTableDetails",
+      "UpstreamPathTemplate": "/GetTableDetails?Host={{Host}}&Database={{Database}}&Username={{UserName}}&Password={{Password}}",
       "UpstreamHttpMethod": [ "Get", "Post" ]
     },
     {
