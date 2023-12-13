@@ -2,53 +2,102 @@
 using AccessService.Models.DTO;
 using AccessService.Services;
 using AccessService.Model.DTO;
-using System.Threading.Tasks;
-
+using System.Net;
+using AccessService.Models;
 namespace AccessService.Controllers
 {
     public class AccessController : Controller
     {
         private readonly AccessesService _accessService;
 
-        // Fix the parameter type to AccessesService
         public AccessController(AccessesService accessService)
         {
-            _accessService = accessService; // Fix the assignment here
+            _accessService = accessService; 
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginViewModelDTO model)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+                var userDetailsDTO = await _accessService.AuthenticateAsync(model.Email, model.Password);
+                if (userDetailsDTO != null)
+                {
+                    var responseModel = new APIResponse
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSuccess = true,
+                        Result = userDetailsDTO
+                    };
+                    return Ok(responseModel);
+                }
+                else
+                {
+                    var errorResponse = new
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessage = "Invalid credentials"
+                    };
+                    return BadRequest(errorResponse);
+                }
             }
-            var userDetailsDTO = await _accessService.AuthenticateAsync(model.Email, model.Password);
-            if (userDetailsDTO != null)
+            catch (Exception ex)
             {
-                return Ok(userDetailsDTO);
-            }
-            else
-            {
-                return BadRequest("Invalid credentials");
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing your request.");
             }
         }
+
+
 
         [HttpPost("createUser")]
         public async Task<IActionResult> CreateUser([FromBody] UserTableModelDTO userModel)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                return BadRequest(ModelState);
+                if (!ModelState.IsValid)
+                {
+                    var errorResponse = new
+                    {
+                        StatusCode = HttpStatusCode.SeeOther,
+                        IsSuccess = false,
+                        ErrorMessage = "Invalid credentials"
+                    };
+                    return BadRequest(ModelState);
+                }
+
+                var createdUser = await _accessService.CreateUserAsync(userModel);
+
+                if (createdUser != null)
+                {
+                    var errorResponse = new
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSuccess = true,
+                        Result = createdUser
+                    };
+                    return Ok(errorResponse);
+                }
+                else
+                {
+                    var errorResponse = new
+                    {
+                        StatusCode = HttpStatusCode.BadRequest,
+                        IsSuccess = false,
+                        ErrorMessage = "Failed to create user. Check role details."
+                    };
+                    return BadRequest(errorResponse);
+                }
             }
-            var createdUser = await _accessService.CreateUserAsync(userModel);
-            if (createdUser != null)
+            catch (Exception ex)
             {
-                return Ok(createdUser);
-            }
-            else
-            {
-                return BadRequest("Failed to create user. Check role details.");
+                Console.WriteLine($"An error occurred: {ex.Message}");
+                return StatusCode(500, "An error occurred while processing your request.");
             }
         }
     }

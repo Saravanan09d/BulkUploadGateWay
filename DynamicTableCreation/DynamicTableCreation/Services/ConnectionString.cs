@@ -118,44 +118,7 @@ namespace DynamicTableCreation.Services
                 }
             }
         }
-        //public void AddTableDetailsToDatabase(Dictionary<string, List<ColumnInfoDTO>> tableDetails)
-        //{
-        //    foreach (var tableName in tableDetails.Keys)
-        //    {
-        //        _dbContext.EntityListMetadataModels.Add(new EntityListMetadataModel { EntityName = tableName });
-        //        foreach (var columnInfo in tableDetails[tableName])
-        //        {
-        //            bool isPrimaryKey = columnInfo.keyType == "PK";
-        //            //bool isForeignKey = columnInfo.foreignKey == "FK";
 
-        //            _dbContext.EntityColumnListMetadataModels.Add(new EntityColumnListMetadataModel
-        //            {
-        //                EntityColumnName = columnInfo.Name,
-        //                Datatype = columnInfo.Type,
-        //                Length = 0,
-        //                MinLength = 0,
-        //                MaxLength = 0,
-        //                MinRange = 0,
-        //                MaxRange = 0,
-        //                DateMinValue = "",
-        //                DateMaxValue = "",
-        //                Description = "",
-        //                IsNullable = false,
-        //                DefaultValue = "",
-        //                ListEntityId = 0,
-        //                ListEntityKey = 0,
-        //                ListEntityValue = 0,
-        //                True = "",
-        //                False = "",
-        //                ColumnPrimaryKey = isPrimaryKey,
-        //                CreatedDate = DateTime.UtcNow,
-        //                UpdatedDate = DateTime.UtcNow,
-        //                EntityId = 0
-        //            });
-        //        }
-        //    }
-        //    _dbContext.SaveChanges();
-        //}
         public void AddTableDetailsToDatabase(Dictionary<string, List<ColumnInfoDTO>> tableDetails)
         {
             foreach (var tableName in tableDetails.Keys)

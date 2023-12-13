@@ -125,7 +125,7 @@
     },
     {
       //GetClientDatabaseDataPasteOurMetaTable
-      "DownstreamPathTemplate": "/GetTableDetails?Host={{Host}}&Database={{Database}}&Username={{UserName}}&Password={{Password}}",
+      "DownstreamPathTemplate": "/GetTableDetails?Host={Host}&Database={Database}&Username={UserName}&Password={Password}",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
@@ -133,7 +133,7 @@
           "Port": 7254
         }
       ],
-      "UpstreamPathTemplate": "/GetTableDetails?Host={{Host}}&Database={{Database}}&Username={{UserName}}&Password={{Password}}",
+      "UpstreamPathTemplate": "/GetTableDetails?Host={Host}&Database={Database}&Username={UserName}&Password={Password}",
       "UpstreamHttpMethod": [ "Get", "Post" ]
     },
     {
@@ -143,7 +143,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7254
+          "Port": 7138
         }
       ],
       "UpstreamPathTemplate": "/createUser",
@@ -156,7 +156,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7254
+          "Port": 7138
         }
       ],
       "UpstreamPathTemplate": "/login",
