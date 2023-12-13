@@ -306,13 +306,31 @@ namespace ExcelGeneration.Controllers
             }
         }
 
+        //[HttpGet("GetTableDetails")]
+        //public IActionResult GetTableDetails([FromServices] EntityService dbContext)
+        //{
+        //    try
+        //    {
+        //        var connectionStringService = new ConnectionStringService(_dbContext);
+        //        string connectionString = "Host=localhost;Database=DynamicTableCreationLatestDEC01;Username=postgres;Password=openpgpwd";
+        //        var tableDetails = connectionStringService.GetTableDetails(connectionString);
+        //        // Add table details to the database
+        //        connectionStringService.AddTableDetailsToDatabase(tableDetails);
+        //        return Ok(tableDetails);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine($"An error occurred: {ex.Message}");
+        //        return StatusCode(500, "Internal Server Error");
+        //    }
+        //}
         [HttpGet("GetTableDetails")]
-        public IActionResult GetTableDetails([FromServices] EntityService dbContext)
+        public IActionResult GetTableDetails([FromQuery] string host, [FromQuery] string database, [FromQuery] string username, [FromQuery] string password, [FromServices] EntityService dbContext)
         {
             try
             {
                 var connectionStringService = new ConnectionStringService(_dbContext);
-                string connectionString = "Host=localhost;Database=DynamicTableCreationLatestDEC01;Username=postgres;Password=openpgpwd";
+                string connectionString = $"Host={host};Database={database};Username={username};Password={password}";
                 var tableDetails = connectionStringService.GetTableDetails(connectionString);
                 // Add table details to the database
                 connectionStringService.AddTableDetailsToDatabase(tableDetails);
@@ -324,6 +342,7 @@ namespace ExcelGeneration.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
     }
 }
 
