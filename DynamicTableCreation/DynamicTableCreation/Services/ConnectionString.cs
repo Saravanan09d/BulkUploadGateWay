@@ -10,6 +10,7 @@ namespace DynamicTableCreation.Services
     public class ConnectionStringService
     {
         private readonly ApplicationDbContext _dbContext;
+
         public ConnectionStringService(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;

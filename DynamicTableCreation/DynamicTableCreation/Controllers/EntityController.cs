@@ -22,6 +22,7 @@ namespace ExcelGeneration.Controllers
         protected APIResponse _response;
         //private readonly ViewService _viewService;
         private readonly IViewService _viewService;
+
         public EntityController(EntityService dynamicDbService, IEntitylistService entitylistService, IViewService viewService, ConnectionStringService ConnectionStringService, ApplicationDbContext dbContext)
         {
             _dynamicDbService = dynamicDbService;
@@ -305,14 +306,14 @@ namespace ExcelGeneration.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
-
         [HttpGet("GetTableDetails")]
-        public IActionResult GetTableDetails([FromServices] EntityService dbContext)
+        public IActionResult GetTableDetails([FromQuery] ConnectionStringDTO connectionDto, [FromServices] EntityService dbContext)
         {
             try
             {
                 var connectionStringService = new ConnectionStringService(_dbContext);
-                string connectionString = "Host=localhost;Database=DynamicTableCreationLatestDEC01;Username=postgres;Password=openpgpwd";
+                string connectionString = $"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}";
+                HttpContext.Session.SetString("ConnectionString", connectionString);
                 var tableDetails = connectionStringService.GetTableDetails(connectionString);
                 // Add table details to the database
                 connectionStringService.AddTableDetailsToDatabase(tableDetails);
@@ -324,6 +325,7 @@ namespace ExcelGeneration.Controllers
                 return StatusCode(500, "Internal Server Error");
             }
         }
+
     }
 }
 
