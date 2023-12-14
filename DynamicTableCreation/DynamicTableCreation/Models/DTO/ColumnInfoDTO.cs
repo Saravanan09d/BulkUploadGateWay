@@ -8,5 +8,8 @@
         public string keyType { get; set; }
 
         public string foreignKey { get; set; }
+
+        public string HostName { get; set; }
+        public string DatabaseName { get; set; }
     }
 }
