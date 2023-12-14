@@ -18,11 +18,14 @@ using Spire.Xls.Core;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
+
 public class ExcelService : IExcelService
 {
+
     private readonly ApplicationDbContext _context;
     private readonly IDbConnection _dbConnection;
     private readonly ExportExcelService _exportExcelService;
+
     public ExcelService(ApplicationDbContext context, IDbConnection dbConnection, ExportExcelService exportExcelService)
     {
         _context = context;
@@ -41,114 +44,121 @@ public class ExcelService : IExcelService
         // Set protection options for the first sheet (read-only)
         worksheet.Protect("your_password", SheetProtectionType.All);
         worksheet.Protect("your_password", SheetProtectionType.None);
+        worksheet.DefaultRowHeight = 15;
+        var headerColor = worksheet.Range["A2:O2"];
+        headerColor.Style.FillPattern = ExcelPatternType.Solid;
+        headerColor.Style.Font.Color = Color.White;
+        headerColor.Style.KnownColor = ExcelColors.Blue;
+        headerColor.Style.Font.IsBold = true;
+        worksheet.DefaultColumnWidth = 15;
         // Add column headers for the first sheet
         worksheet.Range["A2"].Text = "SI.No";
         worksheet.Range["B2"].Text = "Data Item";
         worksheet.Range["C2"].Text = "Data Type";
-        worksheet.Range["D2"].Text = "Length";
-        worksheet.Range["E2"].Text = "MinLength";
-        worksheet.Range["F2"].Text = "MaxLength";
-        worksheet.Range["G2"].Text = "MinRange";
-        worksheet.Range["H2"].Text = "MaxRange";
-        worksheet.Range["I2"].Text = "DateMinValue";
-        worksheet.Range["J2"].Text = "DateMaxValue";
-        worksheet.Range["K2"].Text = "Description";
-        worksheet.Range["L2"].Text = "Blank Not Allowed";
-        worksheet.Range["M2"].Text = "Default Value";
-        worksheet.Range["N2"].Text = "Unique Value";
-        worksheet.Range["O2"].Text = "Option1";
-        worksheet.Range["P2"].Text = "Option2";
-        worksheet.Range["Q2"].Text = "ListEntityID";
-        worksheet.Range["R2"].Text = "ListEntityKey";
-        worksheet.Range["S2"].Text = "ListEntityValue";
+        //worksheet.Range["D2"].Text = "Length";
+        worksheet.Range["D2"].Text = "MinLength";
+        worksheet.Range["E2"].Text = "MaxLength";
+        worksheet.Range["F2"].Text = "MinRange";
+        worksheet.Range["G2"].Text = "MaxRange";
+        worksheet.Range["H2"].Text = "DateMinValue";
+        worksheet.Range["I2"].Text = "DateMaxValue";
+        worksheet.Range["J2"].Text = "Description";
+        worksheet.Range["K2"].Text = "Blank Not Allowed";
+        worksheet.Range["L2"].Text = "Default Value";
+        worksheet.Range["M2"].Text = "Unique Value";
+        worksheet.Range["N2"].Text = "Option1";
+        worksheet.Range["O2"].Text = "Option2";
 
         // Populate the first sheet with column details
         for (int i = 0; i < columns.Count; i++)
         {
             var column = columns[i];
+            int row = i + 3; // Adjust the row index to start from 3
+
+            if (row % 2 == 0)
+            {
+                worksheet.Range[row, 1, row, 15].Style.Color = Color.LightBlue; // Set even row color
+            }
+            else
+            {
+                worksheet.Range[row, 1, row, 15].Style.Color = Color.Azure; // Set odd row color
+            }
             worksheet.Range[i + 3, 1].Value = (i + 1).ToString();
             worksheet.Range[i + 3, 2].Text = column.EntityColumnName;
             worksheet.Range[i + 3, 3].Text = column.Datatype;
-            worksheet.Range[i + 3, 4].Text = string.IsNullOrEmpty(column.Length.ToString()) || column.Length.ToString() == "0".ToString() ? string.Empty : column.Length.ToString();
             if (column.MinLength == null || column.MinLength == 0)
+            {
+                worksheet.Range[i + 3, 4].Text = string.Empty;
+            }
+            else
+            {
+                worksheet.Range[i + 3, 4].Text = column.MinLength.ToString();
+            }
+            if (column.MaxLength == 0)
             {
                 worksheet.Range[i + 3, 5].Text = string.Empty;
             }
             else
             {
-                worksheet.Range[i + 3, 5].Text = column.MinLength.ToString();
+                worksheet.Range[i + 3, 5].Text = column.MaxLength.ToString();
             }
-
-            if (column.MaxLength == 0)
+            if (column.MinRange == null || column.MinRange == 0)
             {
                 worksheet.Range[i + 3, 6].Text = string.Empty;
             }
             else
             {
-                worksheet.Range[i + 3, 6].Text = column.MaxLength.ToString();
+                worksheet.Range[i + 3, 6].Text = column.MinRange.ToString();
             }
-
-            if (column.MinRange == null || column.MinRange == 0)
+            if (column.MaxRange == 0)
             {
                 worksheet.Range[i + 3, 7].Text = string.Empty;
             }
             else
             {
-                worksheet.Range[i + 3, 7].Text = column.MinRange.ToString();
+                worksheet.Range[i + 3, 7].Text = column.MaxRange.ToString();
             }
-
-            if (column.MaxRange == 0)
-            {
-                worksheet.Range[i + 3, 8].Text = string.Empty;
-            }
-            else
-            {
-                worksheet.Range[i + 3, 8].Text = column.MaxRange.ToString();
-            }
-
             if (string.IsNullOrEmpty(column.DateMinValue) && string.IsNullOrEmpty(column.DateMaxValue))
             {
+                worksheet.Range[i + 3, 8].Text = string.Empty;
                 worksheet.Range[i + 3, 9].Text = string.Empty;
-                worksheet.Range[i + 3, 10].Text = string.Empty;
             }
             else
             {
-                worksheet.Range[i + 3, 9].Text = column.DateMinValue;
-                worksheet.Range[i + 3, 10].Text = column.DateMaxValue;
+                worksheet.Range[i + 3, 8].Text = column.DateMinValue;
+                worksheet.Range[i + 3, 9].Text = column.DateMaxValue;
             }
+            worksheet.Range[i + 3, 9].Text = column.DateMaxValue.ToString();
+            worksheet.Range[i + 3, 10].Text = column.Description;
+            worksheet.Range[i + 3, 11].Text = column.IsNullable.ToString();
 
-            worksheet.Range[i + 3, 10].Text = column.DateMaxValue.ToString();
-            worksheet.Range[i + 3, 11].Text = column.Description;
-            worksheet.Range[i + 3, 12].Text = column.IsNullable.ToString();
             if (column.Datatype.ToLower() == "boolean")
             {
                 if (column.DefaultValue.ToLower() == "true")
                 {
-                    worksheet.Range[i + 3, 13].Text = column.True;
+                    worksheet.Range[i + 3, 12].Text = column.True;
                 }
                 else if (column.DefaultValue.ToLower() == "false")
                 {
-                    worksheet.Range[i + 3, 13].Text = column.False;
+                    worksheet.Range[i + 3, 12].Text = column.False;
                 }
             }
             else
             {
-                worksheet.Range[i + 3, 13].Text = column.DefaultValue.ToString();
+                worksheet.Range[i + 3, 12].Text = column.DefaultValue.ToString();
             }
 
-            worksheet.Range[i + 3, 14].Text = column.ColumnPrimaryKey.ToString();
-            worksheet.Range[i + 3, 15].Text = column.True.ToString();
-            worksheet.Range[i + 3, 16].Text = column.False.ToString();
-            worksheet.Range[i + 3, 17].Text = column.ListEntityId.ToString();
-            worksheet.Range[i + 3, 18].Text = column.ListEntityKey.ToString();
-            worksheet.Range[i + 3, 19].Text = column.ListEntityValue.ToString();
+            worksheet.Range[i + 3, 13].Text = column.ColumnPrimaryKey.ToString();
+            worksheet.Range[i + 3, 14].Text = column.True.ToString();
+            worksheet.Range[i + 3, 15].Text = column.False.ToString();
+
+            int lastRowIndex1 = worksheet.Rows.Length;
 
 
-            var lastRowIndex1 = worksheet.Rows.Length;
-            worksheet.Range[lastRowIndex1 + 1, 1].Text = (i + 2).ToString();
-            worksheet.Range[lastRowIndex1 + 1, 1].Style.HorizontalAlignment = HorizontalAlignType.Right;
-            worksheet.Range[lastRowIndex1 + 1, 2].Text = "CurrentDate";
-            worksheet.Range[lastRowIndex1 + 1, 3].Text = "Date";
+            //worksheet.Range[lastRowIndex1 + 1, 1].Text = (i + 2).ToString();
+            //worksheet.Range[lastRowIndex1 + 1, 1].Style.HorizontalAlignment = HorizontalAlignType.Right;
+            //worksheet.Range[lastRowIndex1 + 1, 2].Text = "CurrentDate";
+            //worksheet.Range[lastRowIndex1 + 1, 3].Text = "Date";
             int entityId = GetEntityIdByEntityName(column.entityname);
             worksheet.Range["A1"].Text = entityId.ToString();
         }
@@ -156,6 +166,17 @@ public class ExcelService : IExcelService
 
         // Add static content in the last row (vertically)
         var lastRowIndex = worksheet.Rows.Length;
+        for (int i = lastRowIndex + 2; i <= lastRowIndex + 7; i++)
+        {
+            if (i % 2 == 0)
+            {
+                worksheet.Range[i, 1, i, 5].Style.Color = Color.LightGray; // Set even row color
+            }
+            else
+            {
+                worksheet.Range[i, 1, i, 5].Style.Color = Color.LightSkyBlue; // Set odd row color
+            }
+        }
         worksheet.Range[lastRowIndex + 2, 1].Text = "";
         worksheet.Range[lastRowIndex + 3, 1].Text = "Note:";
         worksheet.Range[lastRowIndex + 4, 1].Text = "1. Don't add or delete any columns";
@@ -175,7 +196,7 @@ public class ExcelService : IExcelService
         //columnNamesWorksheet.AllocatedRange.AutoFitColumns();
         // Set a default column width for the "Fill data" worksheet
         columnNamesWorksheet.DefaultColumnWidth = 15; // Set the width in characters (adjust as needed)
-
+        columnNamesWorksheet.DefaultRowHeight = 15;
         int lastColumnIndex = columns.Count + 1;
 
         for (int i = 0; i < columns.Count; i++)
@@ -184,12 +205,10 @@ public class ExcelService : IExcelService
             columnNamesWorksheet.Range[2, i + 1].Text = column.EntityColumnName;
             int entityId = GetEntityIdByEntityName(column.entityname);
             columnNamesWorksheet.Range["A1"].Text = entityId.ToString();
-
+            columnNamesWorksheet.Range[2, 1, 2, lastColumnIndex - 1].Style.Color = Color.Blue;
+            columnNamesWorksheet.Range[2, 1, 2, lastColumnIndex - 1].Style.Font.IsBold = true;
+            columnNamesWorksheet.Range[2, 1, 2, lastColumnIndex - 1].Style.Font.Color = Color.White;
         }
-
-
-        columnNamesWorksheet.Range[2, lastColumnIndex].Text = "CurrentDate";
-
         columnNamesWorksheet.HideRow(1);
 
         if (parentId.HasValue)
@@ -303,7 +322,9 @@ public class ExcelService : IExcelService
 
                 //Protect the worksheet with password
                 columnNamesWorksheet.Protect("123456", SheetProtectionType.All);
-    
+                List<string> integerTypes = new List<string> { "int", "integer", "number", /* add more as needed */ };
+                List<string> stringTypes = new List<string> { "string", "varchar", "nvarchar", "text", /* add more as needed */ };
+                List<string> timestampTypes = new List<string> { "timestamp", "datetime",  /* add more as needed */ };
 
 
 
@@ -345,7 +366,7 @@ public class ExcelService : IExcelService
                         Console.WriteLine($"No rows retrieved for dropdown values in column {col}.");
                     }
                 }
-                else if (dataType.Equals("string", StringComparison.OrdinalIgnoreCase))
+                else if (stringTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
 
                 {
                     // Text validation with min and max length
@@ -394,7 +415,7 @@ public class ExcelService : IExcelService
                         validation.ErrorMessage = "Entered Values must be unique";
                     }
                 }
-                else if (dataType.Equals("int", StringComparison.OrdinalIgnoreCase))
+                else if (integerTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     validation.CompareOperator = ValidationComparisonOperator.Between;
                     if (isPrimaryKey)
@@ -552,7 +573,7 @@ public class ExcelService : IExcelService
                         validation.InputMessage = "Select values from dropdown";
                     }
                 }
-                else if (dataType.Equals("timestamp", StringComparison.OrdinalIgnoreCase))
+                else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
                     validation.Formula1 = "01/01/1900";
@@ -608,7 +629,7 @@ public class ExcelService : IExcelService
         }
         else
         {
-            int columnCount = columnNamesWorksheet.Columns.Length - 1;
+            int columnCount = columnNamesWorksheet.Columns.Length;
             char letter = 'A';
             char lastletter = 'A';
             // Protect the worksheet with a password
@@ -643,7 +664,12 @@ public class ExcelService : IExcelService
                 //Protect the worksheet with password
                 columnNamesWorksheet.Protect("123456", SheetProtectionType.All);
                 // Check if the current column has a data type of "ListOfValues"
+                List<string> integerTypes = new List<string> { "int", "integer", "number", /* add more as needed */ };
+                List<string> stringTypes = new List<string> { "string", "varchar", "nvarchar", "text","character varying"/* add more as needed */ };
+                List<string> timestampTypes = new List<string> { "timestamp", "datetime", "timestamp without time zone" /* add more as needed */ };
+
                 bool isListOfValuesColumn = string.Equals(dataType, "listofvalue", StringComparison.OrdinalIgnoreCase);
+
                 if (isListOfValuesColumn)
                 {
                     int checklistEntityValue = columns[col - 1].ListEntityValue;
@@ -682,7 +708,7 @@ public class ExcelService : IExcelService
                     }
                 }
 
-                else if (dataType.Equals("string", StringComparison.OrdinalIgnoreCase))
+                else if (stringTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     // Text validation with min and max length
                     validation.CompareOperator = ValidationComparisonOperator.Between;
@@ -730,7 +756,7 @@ public class ExcelService : IExcelService
                         validation.ErrorMessage = "Entered Values must be unique";
                     }
                 }
-                else if (dataType.Equals("int", StringComparison.OrdinalIgnoreCase))
+                else if (integerTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     validation.CompareOperator = ValidationComparisonOperator.Between;
                     if (isPrimaryKey)
@@ -888,7 +914,7 @@ public class ExcelService : IExcelService
                         validation.InputMessage = "Select values from dropdown";
                     }
                 }
-                else if (dataType.Equals("timestamp", StringComparison.OrdinalIgnoreCase))
+                else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
                     validation.Formula1 = "01/01/1900";
@@ -1619,7 +1645,7 @@ public class ExcelService : IExcelService
     {
 
         var columnProperties = GetColumnsForEntity(tableName).ToList();
-   
+
 
 
         var booleancolumns = columnProperties.Where(c => c.Datatype.ToLower() == "boolean").ToList();
