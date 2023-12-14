@@ -2,16 +2,21 @@
 using DynamicTableCreation.Models;
 using DynamicTableCreation.Models.DTO;
 using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
+using Microsoft.AspNetCore.Http;
+using Npgsql;
 
 namespace DynamicTableCreation.Services
 {
     public class EntityService
     {
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ApplicationDbContext _dbContext;
 
-        public EntityService(ApplicationDbContext dbContext)
+        public EntityService(ApplicationDbContext dbContext,IHttpContextAccessor httpContextAccessor)
         {
             _dbContext = dbContext;
+            _httpContextAccessor = httpContextAccessor;
         }
         public async Task<bool> TableExistsAsync(string tableName)
         {
@@ -70,8 +75,24 @@ namespace DynamicTableCreation.Services
         {
             try
             {
+
+
+                var connectionString = _httpContextAccessor.HttpContext.Session.GetString("ConnectionString");
+
+                // Assuming createTableSql contains your SQL script
                 var createTableSql = GenerateCreateTableSql(request);
-                await _dbContext.Database.ExecuteSqlRawAsync(createTableSql);
+
+                using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    using (var command = new NpgsqlCommand(createTableSql, connection))
+                    {
+                        command.ExecuteNonQuery();
+                    }
+                    connection.Close();
+                }
+
                 var entityList = await CreateTableMetadataAsync(request);
                 if (entityList == null)
                 {
@@ -130,8 +151,8 @@ namespace DynamicTableCreation.Services
                         EntityColumnName = column.EntityColumnName,
                         Datatype = column.DataType,
                         Length = column.Length,
-                        MinLength = column.MinLength|0,
-                        MaxLength = column.MaxLength|0,
+                        MinLength = column.MinLength | 0,
+                        MaxLength = column.MaxLength | 0,
                         MinRange = column.MinRange | 0,
                         MaxRange = column.MaxRange | 0,
                         DateMinValue = column.DateMinValue,
@@ -147,6 +168,8 @@ namespace DynamicTableCreation.Services
                         ColumnPrimaryKey = column.ColumnPrimaryKey,
                         CreatedDate = DateTime.UtcNow,
                         UpdatedDate = DateTime.UtcNow,
+                        HostName = "",
+                        DatabaseName = "",
                         EntityId = entityList.Id
                     };
 
@@ -203,7 +226,6 @@ namespace DynamicTableCreation.Services
                         return column.EntityColumnName;
                     }
                 }
-
                 return "ColumnNotFound";
             }
             catch (Exception ex)
@@ -222,7 +244,7 @@ namespace DynamicTableCreation.Services
 
                 if (entity == null)
                 {
-                    return null; // or throw an exception, handle as needed
+                    return null; 
                 }
 
                 var entityId = entity.Id;
@@ -233,7 +255,6 @@ namespace DynamicTableCreation.Services
                     {
                         Id = c.Id,
                         EntityColumnName = c.EntityColumnName,
-                        // Add other properties as needed
                     })
                     .ToList();
 
@@ -245,9 +266,8 @@ namespace DynamicTableCreation.Services
             }
             catch (Exception ex)
             {
-                // Log the exception or handle it as needed
                 Console.WriteLine($"An error occurred: {ex.Message}");
-                return null; // or throw an exception, handle as needed
+                return null; 
             }
         }
 
@@ -255,16 +275,13 @@ namespace DynamicTableCreation.Services
         {
             try
             {
-                // Assuming EntityColumnListMetadataModels is the DbSet in your DbContext
                 var column = _dbContext.EntityColumnListMetadataModels
                     .FirstOrDefault(e => e.ListEntityKey == listEntityKey);
 
                 if (column != null)
                 {
-                    // Check if Datatype is not null or empty before returning
                     if (!string.IsNullOrEmpty(column.Datatype))
                     {
-                        // Convert the datatype to a standardized form
                         return ConvertToStandardDatatype(column.Datatype);
                     }
                 }
@@ -286,13 +303,10 @@ namespace DynamicTableCreation.Services
                 case "int":
                 case "integer":
                     return "integer";
-
                 case "string":
                 case "varchar":
                     return "varchar";
-
                 // Add more cases as needed for other datatypes
-
                 default:
                     return "UnknownDatatype";
             }
@@ -495,6 +509,8 @@ namespace DynamicTableCreation.Services
                 ListEntityValue = newColumn.ListEntityValue,
                 True = newColumn.True,
                 False = newColumn.False,
+                HostName = "",
+                DatabaseName = "",
                 ColumnPrimaryKey = newColumn.ColumnPrimaryKey,
                 CreatedDate = DateTime.UtcNow,
                 UpdatedDate = DateTime.UtcNow,
@@ -522,6 +538,8 @@ namespace DynamicTableCreation.Services
                 ListEntityValue = entityColumn.ListEntityValue | 0,
                 True = entityColumn.True,
                 False = entityColumn.False,
+                HostName = "",
+                DatabaseName = "",
                 ColumnPrimaryKey = entityColumn.ColumnPrimaryKey,
             };
         }

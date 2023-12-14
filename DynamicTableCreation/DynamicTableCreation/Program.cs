@@ -22,7 +22,13 @@ builder.Services.AddCors(options =>
                    .AllowAnyMethod();
         });
 });
-
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddDistributedMemoryCache(); // Use an in-memory cache provider for session
 builder.Services.AddSession(options =>
 {

@@ -184,7 +184,6 @@ namespace ExcelGeneration.Controllers
                 {
                     return BadRequest("Invalid request data. Update.PropertiesList cannot be null.");
                 }
-
                 int entityId = request.EntityId; 
                 if (entityId == 0)
                 {
@@ -308,43 +307,44 @@ namespace ExcelGeneration.Controllers
             }
         }
 
-        [HttpGet("GetTableDetails")]
-        public IActionResult GetTableDetails([FromQuery] ConnectionStringDTO connectionDto, [FromServices] EntityService dbContext)
+      [HttpGet("GetTableDetails")]
+public IActionResult GetTableDetails([FromQuery] ConnectionStringDTO connectionDto, [FromServices] EntityService dbContext)
+{
+    try
+    {
+        var connectionStringService = new ConnectionStringService(_dbContext);
+
+        using (NpgsqlConnection connection = new NpgsqlConnection($"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}"))
         {
-            try
-            {
-                var connectionStringService = new ConnectionStringService(_dbContext);
+            connection.Open();
+            // Store the connection string in the session
+            HttpContext.Session.SetString("ConnectionString", connection.ConnectionString);
 
-                // Create NpgsqlConnection instance
-                using (NpgsqlConnection connection = new NpgsqlConnection($"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}"))
-                {
-                    connection.Open(); // Open the connection
-                    // Call GetTableDetails with the NpgsqlConnection instance
-                    var tableDetails = connectionStringService.GetTableDetails(connection, connectionDto.Host, connectionDto.Database);
-                    // Add table details to the database
-                    var insertedTables = connectionStringService.AddTableDetailsToDatabase(tableDetails);
-                    var responseModel = new APIResponse
-                    {
-                        StatusCode = HttpStatusCode.OK,
-                        IsSuccess = true,
-                        Result = insertedTables
-                    };
+            var tableDetails = connectionStringService.GetTableDetails(connection, connectionDto.Host, connectionDto.Database);
+            var insertedTables = connectionStringService.AddTableDetailsToDatabase(tableDetails);
 
-                    return Ok(responseModel);
-                }
-            }
-            catch (Exception ex)
+            var responseModel = new APIResponse
             {
-                var responseModel = new APIResponse
-                {
-                    StatusCode = HttpStatusCode.InternalServerError,
-                    IsSuccess = false,
-                    ErrorMessage = new List<string> { ex.Message },
-                    Result = null
-                };
-                return StatusCode((int)responseModel.StatusCode, responseModel);
-            }
+                StatusCode = HttpStatusCode.OK,
+                IsSuccess = true,
+                Result = insertedTables
+            };
+            connection.Close();
+            return Ok(responseModel);
         }
+    }
+    catch (Exception ex)
+    {
+        var responseModel = new APIResponse
+        {
+            StatusCode = HttpStatusCode.InternalServerError,
+            IsSuccess = false,
+            ErrorMessage = new List<string> { ex.Message },
+            Result = null
+        };
+        return StatusCode((int)responseModel.StatusCode, responseModel);
+    }
+}
 
     }
 }

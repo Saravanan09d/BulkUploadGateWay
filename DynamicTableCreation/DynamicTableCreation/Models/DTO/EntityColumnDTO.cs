@@ -27,6 +27,8 @@ namespace DynamicTableCreation.Models.DTO
         public int ListEntityId { get; set; }
         public int ListEntityKey { get; set; }
         public int ListEntityValue { get; set; }
+        public string HostName { get; set; }
+        public string DatabaseName { get; set; }
 
         public string? S_ListEntityId { get; set; }
         public string? S_ListEntityKey { get; set; }
@@ -56,6 +58,8 @@ namespace DynamicTableCreation.Models.DTO
                 ListEntityId = data.ListEntityId,
                 ListEntityKey = data.ListEntityKey,
                 ListEntityValue = data.ListEntityValue,
+                HostName = data.HostName,
+                DatabaseName = data.DatabaseName,
             };
         }
 
@@ -83,6 +87,8 @@ namespace DynamicTableCreation.Models.DTO
                 ListEntityId = data.ListEntityId,
                 ListEntityKey = data.ListEntityKey,
                 ListEntityValue = data.ListEntityValue,
+                HostName = data.HostName,
+                DatabaseName = data.DatabaseName,
             };
         }
     }
