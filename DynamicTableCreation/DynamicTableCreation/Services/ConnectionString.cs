@@ -41,7 +41,6 @@ namespace DynamicTableCreation.Services
             }
         }
 
-
         private string[] GetTableNames(NpgsqlConnection connection)
         {
             using (var command = new NpgsqlCommand("SELECT table_name FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_schema = 'public'", connection))
@@ -62,28 +61,19 @@ namespace DynamicTableCreation.Services
             }
         }
 
-        public Dictionary<string, List<ColumnInfoDTO>> GetTableDetails(string connectionString)
-        {
-            using (NpgsqlConnection connection = new NpgsqlConnection(connectionString))
-            {
-                connection.Open();
-                return GetTableDetails(connection);
-            }
-        }
-
-        private Dictionary<string, List<ColumnInfoDTO>> GetTableDetails(NpgsqlConnection connection)
+        public Dictionary<string, List<ColumnInfoDTO>> GetTableDetails(NpgsqlConnection connection, string hostname, string databaseName)
         {
             var tableDetails = new Dictionary<string, List<ColumnInfoDTO>>();
 
             foreach (var tableName in GetTableNames(connection))
             {
-                tableDetails[tableName] = GetTableColumnsAndTypes(connection, tableName);
+                tableDetails[tableName] = GetTableColumnsAndTypes(connection, tableName, hostname, databaseName);
             }
 
             return tableDetails;
         }
 
-        private List<ColumnInfoDTO> GetTableColumnsAndTypes(NpgsqlConnection connection, string tableName)
+        public List<ColumnInfoDTO> GetTableColumnsAndTypes(NpgsqlConnection connection, string tableName, string hostname, string databaseName)
         {
             using (var command = new NpgsqlCommand($@"
             SELECT columns.column_name, columns.data_type, 
@@ -98,6 +88,7 @@ namespace DynamicTableCreation.Services
             {
                 using (var reader = command.ExecuteReader())
                 {
+
                     var columnsAndTypes = new List<ColumnInfoDTO>();
                     while (reader.Read())
                     {
@@ -112,6 +103,8 @@ namespace DynamicTableCreation.Services
                             Type = dataType,
                             keyType = keyType,
                             //foreignKey = foreignKey
+                            HostName = hostname,
+                            DatabaseName = databaseName
                         });
                     }
                     return columnsAndTypes;
@@ -119,51 +112,62 @@ namespace DynamicTableCreation.Services
             }
         }
 
-        public void AddTableDetailsToDatabase(Dictionary<string, List<ColumnInfoDTO>> tableDetails)
+        public List<string> AddTableDetailsToDatabase(Dictionary<string, List<ColumnInfoDTO>> tableDetails)
         {
+            var insertedTables = new List<string>();
+
             foreach (var tableName in tableDetails.Keys)
             {
-                // Save changes to EntityListMetadataModels to generate EntityId
-                _dbContext.EntityListMetadataModels.Add(new EntityListMetadataModel { EntityName = tableName });
-                _dbContext.SaveChanges();
+                // Check if an entry with the same EntityName, HostName, and DatabaseName already exists
+                var existingEntity = _dbContext.EntityListMetadataModels
+                    .FirstOrDefault(e => e.EntityName == tableName);
 
-                // Retrieve the generated EntityId
-                int entityId = _dbContext.EntityListMetadataModels.Single(e => e.EntityName == tableName).Id;
-
-                foreach (var columnInfo in tableDetails[tableName])
+                if (existingEntity == null)
                 {
-                    bool isPrimaryKey = columnInfo.keyType == "PK";
+                    // Save changes to EntityListMetadataModels to generate EntityId
+                    _dbContext.EntityListMetadataModels.Add(new EntityListMetadataModel { EntityName = tableName });
+                    _dbContext.SaveChanges();
 
-                    _dbContext.EntityColumnListMetadataModels.Add(new EntityColumnListMetadataModel
+                    // Retrieve the generated EntityId
+                    int entityId = _dbContext.EntityListMetadataModels.Single(e => e.EntityName == tableName).Id;
+
+                    foreach (var columnInfo in tableDetails[tableName])
                     {
-                        EntityColumnName = columnInfo.Name,
-                        Datatype = columnInfo.Type,
-                        Length = 0,
-                        MinLength = 0,
-                        MaxLength = 0,
-                        MinRange = 0,
-                        MaxRange = 0,
-                        DateMinValue = "",
-                        DateMaxValue = "",
-                        Description = "",
-                        IsNullable = false,
-                        DefaultValue = "",
-                        ListEntityId = 0,
-                        ListEntityKey = 0,
-                        ListEntityValue = 0,
-                        True = "",
-                        False = "",
-                        ColumnPrimaryKey = isPrimaryKey,
-                        CreatedDate = DateTime.UtcNow,
-                        UpdatedDate = DateTime.UtcNow,
-                        EntityId = entityId // Use the retrieved EntityId
-                    });
+                        bool isPrimaryKey = columnInfo.keyType == "PK";
+
+                        _dbContext.EntityColumnListMetadataModels.Add(new EntityColumnListMetadataModel
+                        {
+                            EntityColumnName = columnInfo.Name,
+                            Datatype = columnInfo.Type,
+                            Length = 0,
+                            MinLength = 0,
+                            MaxLength = 0,
+                            MinRange = 0,
+                            MaxRange = 0,
+                            DateMinValue = "",
+                            DateMaxValue = "",
+                            Description = "",
+                            IsNullable = false,
+                            DefaultValue = "",
+                            ListEntityId = 0,
+                            ListEntityKey = 0,
+                            ListEntityValue = 0,
+                            True = "",
+                            False = "",
+                            ColumnPrimaryKey = isPrimaryKey,
+                            CreatedDate = DateTime.UtcNow,
+                            UpdatedDate = DateTime.UtcNow,
+                            HostName = columnInfo.HostName,
+                            DatabaseName = columnInfo.DatabaseName,
+                            EntityId = entityId
+                        });
+                    }
+                    insertedTables.Add(tableName);
                 }
             }
-
-            _dbContext.SaveChanges(); // Save changes to EntityColumnListMetadataModels
+            _dbContext.SaveChanges();
+            return insertedTables;
         }
-
     }
 }
 

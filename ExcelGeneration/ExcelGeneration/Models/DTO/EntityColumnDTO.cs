@@ -29,6 +29,7 @@ namespace ExcelGeneration.Models.DTO
         public int ListEntityValue { get; set; }
 
 
+
         public static explicit operator EntityColumnDTO(EntityColumnListMetadataModel data)
         {
             return new EntityColumnDTO

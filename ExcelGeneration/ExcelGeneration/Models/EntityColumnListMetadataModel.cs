@@ -25,6 +25,8 @@ namespace ExcelGeneration.Models
         public string True { get; set; }
         public string False { get; set; }
         public bool ColumnPrimaryKey { get; set; }
+        public string HostName { get; set; }
+        public string DatabaseName { get; set; }
         public EntityListMetadataModel EntityList { get; set; }
     }
 }
