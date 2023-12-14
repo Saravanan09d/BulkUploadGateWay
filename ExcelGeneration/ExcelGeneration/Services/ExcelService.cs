@@ -270,7 +270,11 @@ public class ExcelService : IExcelService
                     string[] values = cleanedRow.Split(',');
                     for (int columnIndex = 0; columnIndex < values.Length; columnIndex++)
                     {
+                        int lastColumnIndex = columns.Count + 1;
                         columnNamesWorksheet.Range[rowIndex, columnIndex + 1].Text = values[columnIndex];
+                        columnNamesWorksheet.Range[1, lastColumnIndex].Style.Color = Color.Blue;
+                      
+
                     }
 
 
@@ -872,7 +876,7 @@ public class ExcelService : IExcelService
                     }
 
                 }
-                else if (dataType.Equals("Date", StringComparison.OrdinalIgnoreCase))
+                else if (dataType.Equals("Date", StringComparison.OrdinalIgnoreCase) || timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     // Date validation
                     validation.CompareOperator = ValidationComparisonOperator.Between;
@@ -933,19 +937,19 @@ public class ExcelService : IExcelService
                         validation.InputMessage = "Select values from dropdown";
                     }
                 }
-                else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
-                {
-                    validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
-                    validation.Formula1 = "01/01/1900";
-                    validation.Formula2 = "12/31/9999"; // Use dummy values since you're not restricting the range
-                    validation.AllowType = CellDataType.Date;
-                    validation.InputTitle = "Input Data";
-                    validation.InputMessage = "Type a date and time in the specified format(mm/dd/yyyy hh:mm AM/PM)";
-                    validation.ErrorTitle = "Error";
-                    validation.ErrorMessage = "Enter a valid date and time.";
-                    var cellRange = range.Worksheet.Range[range.Row, range.Column];
-                    cellRange.NumberFormat = "mm/dd/yyyy hh:mm AM/PM"; //
-                }
+                //else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
+                //{
+                //    validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
+                //    validation.Formula1 = "01/01/1900";
+                //    validation.Formula2 = "12/31/9999"; // Use dummy values since you're not restricting the range
+                //    validation.AllowType = CellDataType.Date;
+                //    validation.InputTitle = "Input Data";
+                //    validation.InputMessage = "Type a date and time in the specified format(mm/dd/yyyy hh:mm AM/PM)";
+                //    validation.ErrorTitle = "Error";
+                //    validation.ErrorMessage = "Enter a valid date and time.";
+                //    var cellRange = range.Worksheet.Range[range.Row, range.Column];
+                //    cellRange.NumberFormat = "mm/dd/yyyy hh:mm AM/PM"; //
+                //}
                 else if (dataType.Equals("char", StringComparison.OrdinalIgnoreCase))
                 {
                     // Character validation for a single character
@@ -1516,7 +1520,7 @@ public class ExcelService : IExcelService
         badRowsPrimaryKey = modifiedRows;
         string delimiter = ";"; // Specify the delimiter you want
         string baddatas = string.Join(delimiter, badRowsPrimaryKey);
-        string errorMessages = "Duplicate key value violates unique constraints in column " + columnName + "in" + tableName;
+        string errorMessages = "Duplicate key value violates unique constraints in column " + columnName + " " +"in" +" "+ tableName;
 
         // Return both results
         return new ValidationResult { ErrorRowNumber = values, Filedatas = baddatas, errorMessages = errorMessages };
