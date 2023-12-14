@@ -349,5 +349,3 @@ namespace ExcelGeneration.Controllers
     }
 }
 
-
-//HttpContext.Session.SetString("ConnectionString", connectionString);
