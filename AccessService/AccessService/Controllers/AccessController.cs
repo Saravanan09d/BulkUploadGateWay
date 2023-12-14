@@ -53,8 +53,6 @@ namespace AccessService.Controllers
             }
         }
 
-
-
         [HttpPost("createUser")]
         public async Task<IActionResult> CreateUser([FromBody] UserTableModelDTO userModel)
         {
@@ -89,7 +87,7 @@ namespace AccessService.Controllers
                     {
                         StatusCode = HttpStatusCode.BadRequest,
                         IsSuccess = false,
-                        ErrorMessage = "Failed to create user. Check role details."
+                        ErrorMessage = "Failed to create user. Check role details and EmailId"
                     };
                     return BadRequest(errorResponse);
                 }

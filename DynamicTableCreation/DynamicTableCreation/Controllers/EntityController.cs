@@ -6,6 +6,8 @@ using DynamicTableCreation.Models;
 using DynamicTableCreation.Services;
 using DynamicTableCreation.Data;
 using DynamicTableCreation.Models.DTO;
+using Npgsql;
+
 
 
 
@@ -312,18 +314,24 @@ namespace ExcelGeneration.Controllers
             try
             {
                 var connectionStringService = new ConnectionStringService(_dbContext);
-                string connectionString = $"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}";
-                HttpContext.Session.SetString("ConnectionString", connectionString);
-                var tableDetails = connectionStringService.GetTableDetails(connectionString);
-                // Add table details to the database
-                connectionStringService.AddTableDetailsToDatabase(tableDetails);
-                var responseModel = new APIResponse
+
+                // Create NpgsqlConnection instance
+                using (NpgsqlConnection connection = new NpgsqlConnection($"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}"))
                 {
-                    StatusCode = HttpStatusCode.OK,
-                    IsSuccess = true,
-                    Result = tableDetails
-                };
-                return Ok(responseModel);
+                    connection.Open(); // Open the connection
+                    // Call GetTableDetails with the NpgsqlConnection instance
+                    var tableDetails = connectionStringService.GetTableDetails(connection, connectionDto.Host, connectionDto.Database);
+                    // Add table details to the database
+                    var insertedTables = connectionStringService.AddTableDetailsToDatabase(tableDetails);
+                    var responseModel = new APIResponse
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSuccess = true,
+                        Result = insertedTables
+                    };
+
+                    return Ok(responseModel);
+                }
             }
             catch (Exception ex)
             {
@@ -337,6 +345,9 @@ namespace ExcelGeneration.Controllers
                 return StatusCode((int)responseModel.StatusCode, responseModel);
             }
         }
+
     }
 }
 
+
+//HttpContext.Session.SetString("ConnectionString", connectionString);

@@ -22,6 +22,7 @@ namespace AccessService.Services
 
         public async Task<UserDetailsDTO> AuthenticateAsync(string Email, string password)
         {
+          
             var user = await _context.UserTableModel.FirstOrDefaultAsync(u => u.Email == Email);
 
             if (user != null)
@@ -80,7 +81,9 @@ namespace AccessService.Services
         public async Task<UserTableModelDTO> CreateUserAsync(UserTableModelDTO userModel)
         {
             var role = await _context.UserRoleModelDTO.FirstOrDefaultAsync(r => r.Id == userModel.RoleId);
-            if (role != null)
+            bool isEmailExist = await _context.UserTableModel.AnyAsync(u => u.Email == userModel.Email);
+           
+            if (role != null && isEmailExist == false)
             {
                 var newUser = new UserTableModelDTO
                 {
