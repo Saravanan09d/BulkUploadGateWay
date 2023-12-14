@@ -25,12 +25,14 @@ public class ExcelService : IExcelService
     private readonly ApplicationDbContext _context;
     private readonly IDbConnection _dbConnection;
     private readonly ExportExcelService _exportExcelService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ExcelService(ApplicationDbContext context, IDbConnection dbConnection, ExportExcelService exportExcelService)
+    public ExcelService(ApplicationDbContext context, IDbConnection dbConnection, ExportExcelService exportExcelService, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _dbConnection = dbConnection;
         _exportExcelService = exportExcelService;
+        _httpContextAccessor = httpContextAccessor;
 
     }
     public byte[] GenerateExcelFile(List<EntityColumnDTO> columns, int? parentId)
@@ -1713,7 +1715,7 @@ public class ExcelService : IExcelService
 
         IConfigurationRoot configuration = configurationBuilder.Build();
 
-        string connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = _httpContextAccessor.HttpContext.Session.GetString("ConnectionString");
 
         var errorDataList = convertedDataList;
 

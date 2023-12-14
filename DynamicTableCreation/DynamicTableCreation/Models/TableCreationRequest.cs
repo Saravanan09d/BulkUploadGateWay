@@ -32,5 +32,7 @@
         public string False { get; set; }
         public string DefaultValue { get; set; }
         public bool ColumnPrimaryKey { get; set; }
+        public string HostName { get; set; }
+        public string DatabaseName { get; set; }
     }
 }

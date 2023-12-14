@@ -3,14 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using DynamicTableCreation.Data;
 using DynamicTableCreation.Models;
-
+using Microsoft.AspNetCore.Http;
 
 namespace DynamicTableCreation.Services
 {
     public class ConnectionStringService
     {
         private readonly ApplicationDbContext _dbContext;
-
         public ConnectionStringService(ApplicationDbContext dbContext)
         {
             _dbContext = dbContext;
@@ -64,12 +63,10 @@ namespace DynamicTableCreation.Services
         public Dictionary<string, List<ColumnInfoDTO>> GetTableDetails(NpgsqlConnection connection, string hostname, string databaseName)
         {
             var tableDetails = new Dictionary<string, List<ColumnInfoDTO>>();
-
             foreach (var tableName in GetTableNames(connection))
             {
                 tableDetails[tableName] = GetTableColumnsAndTypes(connection, tableName, hostname, databaseName);
             }
-
             return tableDetails;
         }
 
@@ -88,7 +85,6 @@ namespace DynamicTableCreation.Services
             {
                 using (var reader = command.ExecuteReader())
                 {
-
                     var columnsAndTypes = new List<ColumnInfoDTO>();
                     while (reader.Read())
                     {
@@ -96,7 +92,6 @@ namespace DynamicTableCreation.Services
                         string dataType = reader.GetString(1);
                         string keyType = reader.GetString(2);
                         //string foreignKey = reader.GetString(3);
-
                         columnsAndTypes.Add(new ColumnInfoDTO
                         {
                             Name = columnName,
@@ -115,57 +110,56 @@ namespace DynamicTableCreation.Services
         public List<string> AddTableDetailsToDatabase(Dictionary<string, List<ColumnInfoDTO>> tableDetails)
         {
             var insertedTables = new List<string>();
-
-            foreach (var tableName in tableDetails.Keys)
+            try
             {
-                // Check if an entry with the same EntityName, HostName, and DatabaseName already exists
-                var existingEntity = _dbContext.EntityListMetadataModels
-                    .FirstOrDefault(e => e.EntityName == tableName);
-
-                if (existingEntity == null)
+                foreach (var tableName in tableDetails.Keys)
                 {
-                    // Save changes to EntityListMetadataModels to generate EntityId
-                    _dbContext.EntityListMetadataModels.Add(new EntityListMetadataModel { EntityName = tableName });
-                    _dbContext.SaveChanges();
-
-                    // Retrieve the generated EntityId
-                    int entityId = _dbContext.EntityListMetadataModels.Single(e => e.EntityName == tableName).Id;
-
-                    foreach (var columnInfo in tableDetails[tableName])
+                    var existingEntity = _dbContext.EntityListMetadataModels
+                        .FirstOrDefault(e => e.EntityName == tableName);
+                    if (existingEntity == null)
                     {
-                        bool isPrimaryKey = columnInfo.keyType == "PK";
-
-                        _dbContext.EntityColumnListMetadataModels.Add(new EntityColumnListMetadataModel
+                        _dbContext.EntityListMetadataModels.Add(new EntityListMetadataModel { EntityName = tableName });
+                        _dbContext.SaveChanges();
+                        int entityId = _dbContext.EntityListMetadataModels.Single(e => e.EntityName == tableName).Id;
+                        foreach (var columnInfo in tableDetails[tableName])
                         {
-                            EntityColumnName = columnInfo.Name,
-                            Datatype = columnInfo.Type,
-                            Length = 0,
-                            MinLength = 0,
-                            MaxLength = 0,
-                            MinRange = 0,
-                            MaxRange = 0,
-                            DateMinValue = "",
-                            DateMaxValue = "",
-                            Description = "",
-                            IsNullable = false,
-                            DefaultValue = "",
-                            ListEntityId = 0,
-                            ListEntityKey = 0,
-                            ListEntityValue = 0,
-                            True = "",
-                            False = "",
-                            ColumnPrimaryKey = isPrimaryKey,
-                            CreatedDate = DateTime.UtcNow,
-                            UpdatedDate = DateTime.UtcNow,
-                            HostName = columnInfo.HostName,
-                            DatabaseName = columnInfo.DatabaseName,
-                            EntityId = entityId
-                        });
+                            bool isPrimaryKey = columnInfo.keyType == "PK";
+                            _dbContext.EntityColumnListMetadataModels.Add(new EntityColumnListMetadataModel
+                            {
+                                EntityColumnName = columnInfo.Name,
+                                Datatype = columnInfo.Type,
+                                Length = 0,
+                                MinLength = 0,
+                                MaxLength = 0,
+                                MinRange = 0,
+                                MaxRange = 0,
+                                DateMinValue = "",
+                                DateMaxValue = "",
+                                Description = "",
+                                IsNullable = false,
+                                DefaultValue = "",
+                                ListEntityId = 0,
+                                ListEntityKey = 0,
+                                ListEntityValue = 0,
+                                True = "",
+                                False = "",
+                                ColumnPrimaryKey = isPrimaryKey,
+                                CreatedDate = DateTime.UtcNow,
+                                UpdatedDate = DateTime.UtcNow,
+                                HostName = columnInfo.HostName,
+                                DatabaseName = columnInfo.DatabaseName,
+                                EntityId = entityId
+                            });
+                        }
+                        insertedTables.Add(tableName);
                     }
-                    insertedTables.Add(tableName);
                 }
+                _dbContext.SaveChanges();
             }
-            _dbContext.SaveChanges();
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
             return insertedTables;
         }
     }
