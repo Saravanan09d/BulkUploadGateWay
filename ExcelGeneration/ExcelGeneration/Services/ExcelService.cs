@@ -190,7 +190,16 @@ public class ExcelService : IExcelService
         staticContentRange.Style.FillPattern = ExcelPatternType.Solid;
         staticContentRange.Style.KnownColor = ExcelColors.Yellow;
         // Add the second worksheet for column names
-        Worksheet columnNamesWorksheet = workbook.Worksheets.Add("Fill data");
+        Worksheet columnNamesWorksheet;
+
+        if (!parentId.HasValue)
+        {
+            columnNamesWorksheet = workbook.Worksheets.Add("Fill data");
+        }
+        else
+        {
+            columnNamesWorksheet = workbook.Worksheets.Add("Error Records");
+        }
 
         // After adding content to the columns
         //columnNamesWorksheet.AllocatedRange.AutoFitColumns();
@@ -245,7 +254,11 @@ public class ExcelService : IExcelService
             foreach (var logChild in logChilds)
             {
                 string[] rows = logChild.Filedata.Split(';');
+
                 string errorMessage = logChild.ErrorMessage;
+
+                // Set the column name as "ErrorMessage" for the last column after processing all rows
+                columnNamesWorksheet.Range[rowIndex - 1, columns.Count + 1].Text = "ErrorMessage";
 
                 for (int i = 1; i < rows.Length; i++)
                 {
@@ -259,11 +272,17 @@ public class ExcelService : IExcelService
                     {
                         columnNamesWorksheet.Range[rowIndex, columnIndex + 1].Text = values[columnIndex];
                     }
-                    columnNamesWorksheet.Range[rowIndex, values.Length + 1].Text = errorMessage;
+
+
+                    //    columnNamesWorksheet.Range[rowIndex, values.Length + 1].Text = errorMessage;
+                    // Set the error message in the "ErrorMessage" column
+                    columnNamesWorksheet.Range[rowIndex, columns.Count + 1].Text = errorMessage;
 
                     rowIndex++;
                 }
+
             }
+
         }
         catch (Exception ex)
         {
@@ -1464,7 +1483,7 @@ public class ExcelService : IExcelService
         string delimiter1 = ","; // Specify the delimiter you want   //chng
         string baddatas = string.Join(delimiter, validationResult.BadRows);
         string badcolumns = string.Join(delimiter1, validationResult.errorcolumns);
-        errorMessages = "Null value found in column" + badcolumns;
+        errorMessages = "Null value found in column" +" "+ badcolumns;
         // Return both results
         return new ValidationResult { ErrorRowNumber = values, Filedatas = baddatas, errorMessages = errorMessages };
     }
