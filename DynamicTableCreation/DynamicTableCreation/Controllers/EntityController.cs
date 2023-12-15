@@ -22,7 +22,6 @@ namespace ExcelGeneration.Controllers
         private readonly IEntitylistService _entitylistService;
         private readonly ApplicationDbContext _dbContext;
         protected APIResponse _response;
-        //private readonly ViewService _viewService;
         private readonly IViewService _viewService;
 
         public EntityController(EntityService dynamicDbService, IEntitylistService entitylistService, IViewService viewService, ConnectionStringService ConnectionStringService, ApplicationDbContext dbContext)

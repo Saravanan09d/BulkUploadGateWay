@@ -6,17 +6,14 @@ using Npgsql;
 using OfficeOpenXml;
 using System.Data;
 using Spire.Xls;
-using Spire.Xls.Collections;
 using ExcelGeneration.Models;
 using Dapper;
 using System.Text;
 using System.Drawing;
 using ExcelGeneration.Services;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using OfficeOpenXml.DataValidation;
-using Spire.Xls.Core;
-using System.Reflection;
-using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 
 
 public class ExcelService : IExcelService
@@ -343,9 +340,9 @@ public class ExcelService : IExcelService
 
                 //Protect the worksheet with password
                 columnNamesWorksheet.Protect("123456", SheetProtectionType.All);
-                List<string> integerTypes = new List<string> { "int", "integer", "number", /* add more as needed */ };
-                List<string> stringTypes = new List<string> { "string", "varchar", "nvarchar", "text", /* add more as needed */ };
-                List<string> timestampTypes = new List<string> { "timestamp", "datetime",  /* add more as needed */ };
+                List<string> integerTypes = new List<string> { "int", "integer", "number", "numeric", /* add more as needed */ };
+                List<string> stringTypes = new List<string> { "string", "varchar", "nvarchar", "text", "character varying"/* add more as needed */ };
+                List<string> timestampTypes = new List<string> { "timestamp", "datetime", "timestamp without time zone", "date" /* add more as needed */ };
 
 
 
@@ -533,7 +530,7 @@ public class ExcelService : IExcelService
                     }
 
                 }
-                else if (dataType.Equals("Date", StringComparison.OrdinalIgnoreCase))
+                else if (dataType.Equals("Date", StringComparison.OrdinalIgnoreCase) || timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     // Date validation
                     validation.CompareOperator = ValidationComparisonOperator.Between;
@@ -594,19 +591,19 @@ public class ExcelService : IExcelService
                         validation.InputMessage = "Select values from dropdown";
                     }
                 }
-                else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
-                {
-                    validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
-                    validation.Formula1 = "01/01/1900";
-                    validation.Formula2 = "12/31/9999"; // Use dummy values since you're not restricting the range
-                    validation.AllowType = CellDataType.Date;
-                    validation.InputTitle = "Input Data";
-                    validation.InputMessage = "Type a date and time in the specified format(mm/dd/yyyy hh:mm AM/PM)";
-                    validation.ErrorTitle = "Error";
-                    validation.ErrorMessage = "Enter a valid date and time.";
-                    var cellRange = range.Worksheet.Range[range.Row, range.Column];
-                    cellRange.NumberFormat = "mm/dd/yyyy hh:mm AM/PM"; //
-                }
+                //else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
+                //{
+                //    validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
+                //    validation.Formula1 = "01/01/1900";
+                //    validation.Formula2 = "12/31/9999"; // Use dummy values since you're not restricting the range
+                //    validation.AllowType = CellDataType.Date;
+                //    validation.InputTitle = "Input Data";
+                //    validation.InputMessage = "Type a date and time in the specified format(mm/dd/yyyy hh:mm AM/PM)";
+                //    validation.ErrorTitle = "Error";
+                //    validation.ErrorMessage = "Enter a valid date and time.";
+                //    var cellRange = range.Worksheet.Range[range.Row, range.Column];
+                //    cellRange.NumberFormat = "mm/dd/yyyy hh:mm AM/PM"; //
+                //}
                 else if (dataType.Equals("char", StringComparison.OrdinalIgnoreCase))
                 {
                     // Character validation for a single character
@@ -685,9 +682,9 @@ public class ExcelService : IExcelService
                 //Protect the worksheet with password
                 columnNamesWorksheet.Protect("123456", SheetProtectionType.All);
                 // Check if the current column has a data type of "ListOfValues"
-                List<string> integerTypes = new List<string> { "int", "integer", "number", /* add more as needed */ };
+                List<string> integerTypes = new List<string> { "int", "integer", "number","numeric", /* add more as needed */ };
                 List<string> stringTypes = new List<string> { "string", "varchar", "nvarchar", "text","character varying"/* add more as needed */ };
-                List<string> timestampTypes = new List<string> { "timestamp", "datetime", "timestamp without time zone" /* add more as needed */ };
+                List<string> timestampTypes = new List<string> { "timestamp", "datetime", "timestamp without time zone" , "date" /* add more as needed */ };
 
                 bool isListOfValuesColumn = string.Equals(dataType, "listofvalue", StringComparison.OrdinalIgnoreCase);
 
@@ -874,7 +871,7 @@ public class ExcelService : IExcelService
                     }
 
                 }
-                else if (dataType.Equals("Date", StringComparison.OrdinalIgnoreCase))
+                else if (dataType.Equals("Date", StringComparison.OrdinalIgnoreCase) || timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
                 {
                     // Date validation
                     validation.CompareOperator = ValidationComparisonOperator.Between;
@@ -935,19 +932,19 @@ public class ExcelService : IExcelService
                         validation.InputMessage = "Select values from dropdown";
                     }
                 }
-                else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
-                {
-                    validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
-                    validation.Formula1 = "01/01/1900";
-                    validation.Formula2 = "12/31/9999"; // Use dummy values since you're not restricting the range
-                    validation.AllowType = CellDataType.Date;
-                    validation.InputTitle = "Input Data";
-                    validation.InputMessage = "Type a date and time in the specified format(mm/dd/yyyy hh:mm AM/PM)";
-                    validation.ErrorTitle = "Error";
-                    validation.ErrorMessage = "Enter a valid date and time.";
-                    var cellRange = range.Worksheet.Range[range.Row, range.Column];
-                    cellRange.NumberFormat = "mm/dd/yyyy hh:mm AM/PM"; //
-                }
+                //else if (timestampTypes.Contains(dataType, StringComparer.OrdinalIgnoreCase))
+                //{
+                //    validation.CompareOperator = ValidationComparisonOperator.Between; // You can use any operator here.
+                //    validation.Formula1 = "01/01/1900";
+                //    validation.Formula2 = "12/31/9999"; // Use dummy values since you're not restricting the range
+                //    validation.AllowType = CellDataType.Date;
+                //    validation.InputTitle = "Input Data";
+                //    validation.InputMessage = "Type a date and time in the specified format(mm/dd/yyyy hh:mm AM/PM)";
+                //    validation.ErrorTitle = "Error";
+                //    validation.ErrorMessage = "Enter a valid date and time.";
+                //    var cellRange = range.Worksheet.Range[range.Row, range.Column];
+                //    cellRange.NumberFormat = "mm/dd/yyyy hh:mm AM/PM"; //
+                //}
                 else if (dataType.Equals("char", StringComparison.OrdinalIgnoreCase))
                 {
                     // Character validation for a single character
@@ -980,8 +977,6 @@ public class ExcelService : IExcelService
                         validation.ErrorMessage = "Invalid byte array format or length.";
                     }
                 }
-
-
 
             }
             for (int i = 3; i <= 65537; i++)
@@ -1957,9 +1952,26 @@ public class ExcelService : IExcelService
         try
         {
             // Use Dapper to execute a parameterized query to fetch IDs
-            string query = $"SELECT \"{primaryKeyColumn}\" FROM public.\"{tableName}\";";
-            var ids = await _dbConnection.QueryAsync<string>(query);
-            return ids.ToList();
+            var connectionString = _httpContextAccessor.HttpContext.Session.GetString("ConnectionString");
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Connection string not found in the session.");
+            }
+
+            using (var dbConnection = new NpgsqlConnection(connectionString))
+            {
+                // Open the connection
+                dbConnection.Open();
+
+                // Construct the query to retrieve primary key values
+                string query = $"SELECT \"{primaryKeyColumn}\" FROM public.\"{tableName}\"";
+
+                // Use Dapper to execute the query and retrieve the primary key values
+                var primaryKeys = dbConnection.Query<string>(query).ToList();
+
+                return primaryKeys;
+            }
         }
         catch (Exception ex)
         {
@@ -1970,16 +1982,35 @@ public class ExcelService : IExcelService
     {
         try
         {
-            // Use Dapper to execute a parameterized query to check if the table exists
-            string query = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = @TableName)";
-            bool tableExists = _dbConnection.QueryFirstOrDefault<bool>(query, new { TableName = tableName });
-            return tableExists;
+            var connectionString = _httpContextAccessor.HttpContext.Session.GetString("ConnectionString");
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Connection string not found in the session.");
+            }
+
+            using (var dbConnection = new NpgsqlConnection(connectionString))
+            {
+                // Open the connection
+                dbConnection.Open();
+
+                // Use Dapper to execute a parameterized query to check if the table exists
+                string query = "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = @TableName)";
+                bool tableExists = dbConnection.QueryFirstOrDefault<bool>(query, new { TableName = tableName });
+
+                return tableExists;
+            }
         }
         catch (Exception ex)
         {
-            throw new Exception("Error checking table existence in the specified database.", ex);
+            // Log or print detailed information about the exception
+            Console.WriteLine($"Error checking table existence. ConnectionString: TableName: {tableName}, Exception: {ex}");
+
+            // Rethrow the exception
+            throw;
         }
     }
+
 
     public async Task<(string TableName, List<dynamic> Rows)> GetTableDataByListEntityId(int listEntityId)
 
@@ -2007,7 +2038,14 @@ public class ExcelService : IExcelService
 
         try
         {
-            using (IDbConnection dbConnection = new NpgsqlConnection(_dbConnection.ConnectionString))
+            var connectionString = _httpContextAccessor.HttpContext.Session.GetString("ConnectionString");
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Connection string not found in the session.");
+            }
+
+            using (IDbConnection dbConnection = new NpgsqlConnection(connectionString))
             {
                 dbConnection.Open();
 
@@ -2016,7 +2054,6 @@ public class ExcelService : IExcelService
 
                 // Use Dapper to execute the query and return the results
                 var rows = dbConnection.Query(rowDataQuery).ToList();
-
 
                 return (tableName, rows);
             }
@@ -2074,7 +2111,14 @@ public class ExcelService : IExcelService
 
         try
         {
-            using (IDbConnection dbConnection = new NpgsqlConnection(_dbConnection.ConnectionString))
+            var connectionString = _httpContextAccessor.HttpContext.Session.GetString("ConnectionString");
+
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                throw new InvalidOperationException("Connection string not found in the session.");
+            }
+
+            using (IDbConnection dbConnection = new NpgsqlConnection(connectionString))
             {
                 dbConnection.Open();
 

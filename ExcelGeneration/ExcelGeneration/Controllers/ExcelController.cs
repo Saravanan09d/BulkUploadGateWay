@@ -6,6 +6,7 @@ using System.Data;
 using System.Net;
 using ExcelGeneration.Data;
 using Microsoft.AspNetCore.Cors;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 namespace ExcelGeneration.Controllers
 {
@@ -22,11 +23,15 @@ namespace ExcelGeneration.Controllers
         }
         [HttpPost("generate")]
         [EnableCors("AllowAngularDev")]
-        public IActionResult GenerateExcelFile([FromBody] List<EntityColumnDTO> columns, int? parentId)
+        public IActionResult GenerateExcelFile([FromBody] List<EntityColumnDTO> columns, [FromQuery] ConnectionStringDTO connectionDto)
         {
             try
             {
-        
+                int? parentId = connectionDto.parentId;
+
+                string connectionstring = $"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}";
+
+                HttpContext.Session.SetString("ConnectionString", connectionstring);
 
                 byte[] excelBytes = _excelService.GenerateExcelFile(columns, parentId);
                 var fileContentResult = new FileContentResult(excelBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -54,8 +59,14 @@ namespace ExcelGeneration.Controllers
 
         [HttpPost("upload")]
         [EnableCors("AllowAngularDev")]
-        public async Task<IActionResult> UploadFile(IFormFile file, string tableName)
+        public async Task<IActionResult> UploadFile(IFormFile file, [FromQuery] ConnectionStringDTO connectionDto)
         {
+            string tableName = connectionDto.tableName;
+
+            string connectionstring = $"Host={connectionDto.Host};Database={connectionDto.Database};Username={connectionDto.Username};Password={connectionDto.Password}";
+
+            HttpContext.Session.SetString("ConnectionString", connectionstring);
+
             var mytablername = tableName;
             List<string> errorMessages = new List<string>();
             string successMessage = null;
