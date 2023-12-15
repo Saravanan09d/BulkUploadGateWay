@@ -7,6 +7,7 @@ using AccessService.Models.DTO;
 
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddControllers();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddScoped<IDbConnection>(_ => new NpgsqlConnection(connectionString));
@@ -23,6 +24,12 @@ builder.Services.AddCors(options =>
                    .AllowAnyMethod();
         });
 });
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+});
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache(); // Use an in-memory cache provider for session
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 //builder.Services.AddScoped<AccessService>();
 builder.Services.AddScoped<AccessesService>();
@@ -42,6 +49,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseSession();
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();

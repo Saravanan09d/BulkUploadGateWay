@@ -47,12 +47,12 @@
           "Port": 7260
         }
       ],
-      "UpstreamPathTemplate": "/generate?parentId={parentId}",
+      "UpstreamPathTemplate": "/generate?parentId={parentId}&Host={Host}&Database={Database}&Username={UserName}&Password={Password}",
       "UpstreamHttpMethod": [ "Get", "Post" ]
     },
     {
 
-      "DownstreamPathTemplate": "/generate",
+      "DownstreamPathTemplate": "/generate?parentId={parentId}&Host={Host}&Database={Database}&Username={UserName}&Password={Password}",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
@@ -64,7 +64,7 @@
       "UpstreamHttpMethod": [ "Get", "Post" ]
     },
     {
-      "DownstreamPathTemplate": "/upload?tableName={tableName}",
+      "DownstreamPathTemplate": "/upload?tableName={tableName}&Host={Host}&Database={Database}&Username={UserName}&Password={Password}",
       "DownstreamScheme": "https",
       "DownstreamHostAndPorts": [
         {
@@ -72,7 +72,7 @@
           "Port": 7260
         }
       ],
-      "UpstreamPathTemplate": "/upload?tableName={tableName}",
+      "UpstreamPathTemplate": "/upload?tableName={tableName}&Host={Host}&Database={Database}&Username={UserName}&Password={Password}",
       "UpstreamHttpMethod": [ "Get", "Post" ]
     },
     {
