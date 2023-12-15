@@ -1513,7 +1513,7 @@ public class ExcelService : IExcelService
         badRowsPrimaryKey = modifiedRows;
         string delimiter = ";"; // Specify the delimiter you want
         string baddatas = string.Join(delimiter, badRowsPrimaryKey);
-        string errorMessages = "Duplicate key value violates unique constraints in column " + columnName + "in" + tableName;
+        string errorMessages = "Duplicate key value violates unique constraints in column " + columnName+" " + "in" +" "+ tableName;
 
         // Return both results
         return new ValidationResult { ErrorRowNumber = values, Filedatas = baddatas, errorMessages = errorMessages };
